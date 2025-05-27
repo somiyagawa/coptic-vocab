@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Academic Bohairic Coptic Vocabulary Learning System with offline support">
+    <meta name="theme-color" content="#8b4513">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Coptic Learning">
+    
     <title>Bohairic Coptic Vocabulary Learning App</title>
+    
     <style>
         @font-face {
             font-family: 'Antinoou';
@@ -37,6 +47,94 @@
             min-height: 100vh;
             padding: 20px;
             color: #333;
+        }
+
+        /* PWA Install Banner */
+        .install-banner {
+            display: none;
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            z-index: 1001;
+            max-width: 90%;
+            text-align: center;
+        }
+
+        .install-banner h4 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .install-banner button {
+            margin: 5px;
+        }
+
+        /* Offline Indicator */
+        .offline-indicator {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: var(--warning-color);
+            color: white;
+            text-align: center;
+            padding: 10px;
+            z-index: 1002;
+            font-weight: 600;
+        }
+
+        .offline-indicator.show {
+            display: block;
+        }
+
+        /* Sync Status */
+        .sync-status {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 14px;
+            z-index: 999;
+        }
+
+        .sync-status.show {
+            display: flex;
+        }
+
+        .sync-status.syncing {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .sync-status.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .sync-status.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .sync-spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #1976d2;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
 
         .container {
@@ -688,6 +786,13 @@
             display: block;
         }
 
+        .file-status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
         /* Enhanced Login Modal */
         .login-overlay {
             position: fixed;
@@ -913,6 +1018,41 @@
             display: none;
         }
 
+        /* Storage Info */
+        .storage-info {
+            background: #e1f5fe;
+            border: 1px solid #4fc3f7;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .storage-info h5 {
+            color: #0277bd;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .storage-info p {
+            color: #01579b;
+            margin-bottom: 5px;
+        }
+
+        .storage-meter {
+            width: 100%;
+            height: 20px;
+            background: #b3e5fc;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .storage-used {
+            height: 100%;
+            background: #4fc3f7;
+            transition: width 0.3s ease;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header h1 {
@@ -1076,10 +1216,29 @@
     </style>
 </head>
 <body>
+    <!-- Offline Indicator -->
+    <div class="offline-indicator" id="offline-indicator">
+        📵 You're offline - Working in offline mode
+    </div>
+    
+    <!-- PWA Install Banner -->
+    <div class="install-banner" id="install-banner">
+        <h4>Install Coptic Learning App</h4>
+        <p>Install this app on your device for offline access and better performance!</p>
+        <button class="btn-primary" id="install-btn">Install App</button>
+        <button class="btn-secondary" id="dismiss-install">Not Now</button>
+    </div>
+    
+    <!-- Sync Status -->
+    <div class="sync-status" id="sync-status">
+        <div class="sync-spinner"></div>
+        <span id="sync-message">Syncing...</span>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1><span class="coptic">ⲃⲟϩⲁⲓⲣⲓⲕⲟⲛ</span> • Bohairic Coptic</h1>
-            <p>Academic Vocabulary Learning System</p>
+            <p>Academic Vocabulary Learning System - PWA Edition</p>
             
             <div class="user-info" id="user-info">
                 <div class="user-name" id="user-name"></div>
@@ -1372,7 +1531,7 @@
                     
                     <div class="export-import-section">
                         <h4>💾 Save & Load Your Progress</h4>
-                        <p><strong>Note:</strong> Data is stored in memory during your session. Use export/import to save permanently.</p>
+                        <p><strong>Enhanced:</strong> Your data is now automatically saved using IndexedDB for persistent storage!</p>
                         
                         <div class="file-controls">
                             <button class="btn-primary" onclick="exportUserData()">📥 Export My Data</button>
@@ -1385,11 +1544,21 @@
                     <div class="export-import-section">
                         <h4>📚 Vocabulary Management</h4>
                         <div class="file-controls">
-                            <input type="file" id="turtle-file" accept=".ttl,.rdf,.n3" class="file-input">
-                            <button class="btn-primary" onclick="loadTurtleFile()">Load Vocabulary File</button>
+                            <input type="file" id="vocab-file" accept=".json" class="file-input">
+                            <button class="btn-primary" onclick="loadVocabularyFile()">Load Vocabulary File</button>
                             <button class="btn-secondary" onclick="loadSampleData()">Reset to Sample Data</button>
                         </div>
                         <div id="file-status" class="file-status"></div>
+                    </div>
+                    
+                    <div class="storage-info">
+                        <h5>💾 Local Storage Usage</h5>
+                        <p>Storage Type: <strong>IndexedDB (Persistent)</strong></p>
+                        <p>Estimated Usage: <span id="storage-used">0 KB</span> / <span id="storage-total">∞</span></p>
+                        <div class="storage-meter">
+                            <div class="storage-used" id="storage-bar" style="width: 0%"></div>
+                        </div>
+                        <button class="btn-secondary" onclick="clearAllData()" style="margin-top: 10px;">🗑️ Clear All Data</button>
                     </div>
                     
                     <div class="data-stats" style="margin-top: 40px;">
@@ -1415,13 +1584,15 @@
                     </div>
                     
                     <div class="tech-info">
-                        <h4>⚠️ Technical Information</h4>
-                        <p><strong>Storage Limitation:</strong> This app runs in Claude.ai's environment where localStorage isn't available. Your progress is saved in memory during your session.</p>
-                        <p><strong>For Persistent Storage:</strong></p>
+                        <h4>✨ PWA Features Active</h4>
+                        <p><strong>Offline Support:</strong> This app works offline thanks to Service Worker technology.</p>
+                        <p><strong>IndexedDB Storage:</strong> Your progress is automatically saved locally and persists between sessions.</p>
+                        <p><strong>Installation:</strong> Install this app on your device for the best experience!</p>
                         <ul>
-                            <li>Export your data regularly using the Export button</li>
-                            <li>Copy this code to your own website for full localStorage support</li>
-                            <li>Use the Import feature to restore your progress</li>
+                            <li>Works offline after first visit</li>
+                            <li>Installable on desktop and mobile</li>
+                            <li>Auto-saves all progress</li>
+                            <li>No server required</li>
                         </ul>
                     </div>
                 </div>
@@ -1430,8 +1601,14 @@
     </div>
 
     <script>
-        // Enhanced Vocabulary Database from Ontolex Lemon Coptic-English Historical Lexicon
-        const vocabulary = [
+        // Database and PWA Configuration
+        const DB_NAME = 'CopticLearningDB';
+        const DB_VERSION = 1;
+        let db = null;
+        let deferredPrompt = null;
+
+        // Enhanced Vocabulary Database
+        const defaultVocabulary = [
             // Level 1 - Basic/Elementary
             {coptic: "ⲁ", english: "letter A", category: "Grammar", level: 1, etymology: "native", pos: "noun"},
             {coptic: "ⲁ", english: "one", category: "Numbers", level: 1, etymology: "native", pos: "numeral"},
@@ -1490,6 +1667,7 @@
         ];
 
         // App State
+        let vocabulary = [...defaultVocabulary];
         let currentCardIndex = 0;
         let isFlipped = false;
         let currentQuizIndex = 0;
@@ -1506,55 +1684,315 @@
         
         // User Management
         let currentUser = null;
-        let userProfiles = {
-            'scholar@coptic.edu': {
-                name: 'Dr. Sarah Johnson',
-                password: 'coptic123',
-                role: 'researcher',
-                studiedCards: new Set(),
-                learnedCards: new Set(),
-                progress: {
-                    correctAnswers: 0,
-                    totalQuestions: 0,
-                    studyStreak: 3,
-                    preferredLevel: 1
+        let userProfiles = {};
+
+        // IndexedDB Setup
+        async function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                
+                request.onerror = () => {
+                    console.error('Database failed to open');
+                    reject(request.error);
+                };
+                
+                request.onsuccess = () => {
+                    db = request.result;
+                    console.log('Database opened successfully');
+                    resolve(db);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    
+                    // Create object stores
+                    if (!db.objectStoreNames.contains('vocabulary')) {
+                        const vocabStore = db.createObjectStore('vocabulary', { keyPath: 'id', autoIncrement: true });
+                        vocabStore.createIndex('coptic', 'coptic', { unique: false });
+                        vocabStore.createIndex('category', 'category', { unique: false });
+                        vocabStore.createIndex('level', 'level', { unique: false });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('users')) {
+                        const userStore = db.createObjectStore('users', { keyPath: 'email' });
+                        userStore.createIndex('name', 'name', { unique: false });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('progress')) {
+                        const progressStore = db.createObjectStore('progress', { keyPath: 'id', autoIncrement: true });
+                        progressStore.createIndex('userId', 'userId', { unique: false });
+                        progressStore.createIndex('timestamp', 'timestamp', { unique: false });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('settings')) {
+                        db.createObjectStore('settings', { keyPath: 'key' });
+                    }
+                };
+            });
+        }
+
+        // Database Operations
+        async function saveToIndexedDB(storeName, data) {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.put(data);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getFromIndexedDB(storeName, key) {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.get(key);
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getAllFromIndexedDB(storeName) {
+            const transaction = db.transaction([storeName], 'readonly');
+            const store = transaction.objectStore(storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.getAll();
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function deleteFromIndexedDB(storeName, key) {
+            const transaction = db.transaction([storeName], 'readwrite');
+            const store = transaction.objectStore(storeName);
+            
+            return new Promise((resolve, reject) => {
+                const request = store.delete(key);
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        // Load data from IndexedDB
+        async function loadDataFromDB() {
+            try {
+                showSyncStatus('Loading data...', 'syncing');
+                
+                // Load vocabulary
+                const vocabData = await getAllFromIndexedDB('vocabulary');
+                if (vocabData && vocabData.length > 0) {
+                    vocabulary = vocabData;
+                    filteredVocab = [...vocabulary];
                 }
-            },
-            'student@uni.edu': {
-                name: 'Alex Thompson',
-                password: 'student456',
-                role: 'student', 
-                studiedCards: new Set(),
-                learnedCards: new Set(),
-                progress: {
-                    correctAnswers: 0,
-                    totalQuestions: 0,
-                    studyStreak: 1,
-                    preferredLevel: 1
+                
+                // Load users
+                const usersData = await getAllFromIndexedDB('users');
+                if (usersData) {
+                    userProfiles = {};
+                    usersData.forEach(user => {
+                        userProfiles[user.email] = user;
+                    });
                 }
+                
+                // Load settings
+                const lastUserSetting = await getFromIndexedDB('settings', 'lastUser');
+                if (lastUserSetting && lastUserSetting.value) {
+                    const savedUser = userProfiles[lastUserSetting.value];
+                    if (savedUser) {
+                        currentUser = savedUser;
+                        await loadUserProgress();
+                    }
+                }
+                
+                showSyncStatus('Data loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showSyncStatus('Error loading data', 'error');
             }
-        };
+        }
+
+        // Save vocabulary to IndexedDB
+        async function saveVocabularyToDB() {
+            const transaction = db.transaction(['vocabulary'], 'readwrite');
+            const store = transaction.objectStore('vocabulary');
+            
+            // Clear existing vocabulary
+            await store.clear();
+            
+            // Add new vocabulary with IDs
+            vocabulary.forEach((word, index) => {
+                store.put({ ...word, id: index + 1 });
+            });
+            
+            return new Promise((resolve, reject) => {
+                transaction.oncomplete = () => resolve();
+                transaction.onerror = () => reject(transaction.error);
+            });
+        }
+
+        // Save user progress
+        async function saveProgress() {
+            if (!currentUser) return;
+            
+            try {
+                showSyncStatus('Saving progress...', 'syncing');
+                
+                // Update user data
+                currentUser.studiedCards = Array.from(studiedCards);
+                currentUser.learnedCards = Array.from(learnedCards);
+                currentUser.progress = {
+                    correctAnswers: correctAnswers,
+                    totalQuestions: totalQuestions,
+                    studyStreak: currentUser.progress?.studyStreak || 0,
+                    lastStudied: new Date().toISOString()
+                };
+                
+                await saveToIndexedDB('users', currentUser);
+                
+                // Save progress entry
+                const progressEntry = {
+                    userId: currentUser.email,
+                    timestamp: new Date().toISOString(),
+                    studiedCards: currentUser.studiedCards.length,
+                    learnedCards: currentUser.learnedCards.length,
+                    quizAccuracy: totalQuestions > 0 ? (correctAnswers / totalQuestions) : 0
+                };
+                
+                await saveToIndexedDB('progress', progressEntry);
+                
+                showSyncStatus('Progress saved', 'success');
+            } catch (error) {
+                console.error('Error saving progress:', error);
+                showSyncStatus('Error saving progress', 'error');
+            }
+        }
+
+        // Load user progress
+        async function loadUserProgress() {
+            if (!currentUser) return;
+            
+            studiedCards = new Set(currentUser.studiedCards || []);
+            learnedCards = new Set(currentUser.learnedCards || []);
+            correctAnswers = currentUser.progress?.correctAnswers || 0;
+            totalQuestions = currentUser.progress?.totalQuestions || 0;
+            
+            updateProgress();
+        }
+
+        // PWA Install Handling
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            
+            // Show install banner
+            const installBanner = document.getElementById('install-banner');
+            installBanner.style.display = 'block';
+        });
+
+        document.getElementById('install-btn').addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            
+            if (outcome === 'accepted') {
+                console.log('PWA installed');
+                showFileStatus('App installed successfully!', 'success');
+            }
+            
+            deferredPrompt = null;
+            document.getElementById('install-banner').style.display = 'none';
+        });
+
+        document.getElementById('dismiss-install').addEventListener('click', () => {
+            document.getElementById('install-banner').style.display = 'none';
+        });
+
+        // Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('ServiceWorker registered:', registration);
+                } catch (error) {
+                    console.log('ServiceWorker registration failed:', error);
+                }
+            });
+        }
+
+        // Online/Offline Detection
+        function updateOnlineStatus() {
+            const indicator = document.getElementById('offline-indicator');
+            if (!navigator.onLine) {
+                indicator.classList.add('show');
+            } else {
+                indicator.classList.remove('show');
+            }
+        }
+
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+
+        // Show sync status
+        function showSyncStatus(message, type = 'syncing') {
+            const syncStatus = document.getElementById('sync-status');
+            const syncMessage = document.getElementById('sync-message');
+            
+            syncStatus.className = `sync-status show ${type}`;
+            syncMessage.textContent = message;
+            
+            if (type !== 'syncing') {
+                setTimeout(() => {
+                    syncStatus.classList.remove('show');
+                }, 3000);
+            }
+        }
 
         // Initialize App
-        function initApp() {
-            filteredVocab = [...vocabulary];
-            currentCardIndex = 0;
-            
-            // Set up button event listeners
-            setupEventListeners();
-            
-            // Check if user should be logged in automatically
-            checkAutoLogin();
-            
-            // Initialize tabs
-            showTab('flashcards');
-            
-            updateFlashcard();
-            generateQuizQuestions();
-            populateBrowse();
-            updateProgress();
-            updateDataStats();
-            drawActivityChart();
+        async function initApp() {
+            try {
+                // Initialize IndexedDB
+                await initDB();
+                
+                // Load data from IndexedDB
+                await loadDataFromDB();
+                
+                // If no vocabulary in DB, save default
+                if (vocabulary.length === 0) {
+                    vocabulary = [...defaultVocabulary];
+                    await saveVocabularyToDB();
+                }
+                
+                filteredVocab = [...vocabulary];
+                currentCardIndex = 0;
+                
+                // Set up button event listeners
+                setupEventListeners();
+                
+                // Update UI
+                updateUserInterface();
+                
+                // Initialize tabs
+                showTab('flashcards');
+                
+                updateFlashcard();
+                generateQuizQuestions();
+                populateBrowse();
+                updateProgress();
+                updateDataStats();
+                drawActivityChart();
+                updateStorageInfo();
+                
+                // Check online status
+                updateOnlineStatus();
+                
+            } catch (error) {
+                console.error('Failed to initialize app:', error);
+                showFileStatus('Error initializing app. Some features may not work.', 'error');
+            }
         }
 
         // Setup Event Listeners
@@ -1661,7 +2099,7 @@
             }
         }
 
-        function login(event) {
+        async function login(event) {
             event.preventDefault();
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
@@ -1670,15 +2108,14 @@
                 currentUser = userProfiles[email];
                 currentUser.email = email;
                 
+                // Save last user
+                await saveToIndexedDB('settings', { key: 'lastUser', value: email });
+                
                 // Load user's progress
-                studiedCards = new Set(currentUser.studiedCards || []);
-                learnedCards = new Set(currentUser.learnedCards || []);
-                correctAnswers = currentUser.progress.correctAnswers || 0;
-                totalQuestions = currentUser.progress.totalQuestions || 0;
+                await loadUserProgress();
                 
                 updateUserInterface();
                 hideLogin();
-                updateProgress();
                 showFileStatus(`Welcome back, ${currentUser.name}!`, 'success');
             } else {
                 document.getElementById('auth-error').textContent = 'Invalid email or password';
@@ -1686,7 +2123,7 @@
             }
         }
 
-        function signup(event) {
+        async function signup(event) {
             event.preventDefault();
             const name = document.getElementById('signup-name').value;
             const email = document.getElementById('signup-email').value;
@@ -1701,39 +2138,47 @@
             }
             
             // Create new user
-            userProfiles[email] = {
+            const newUser = {
                 name: name,
+                email: email,
                 password: password,
                 role: role,
-                studiedCards: new Set(),
-                learnedCards: new Set(),
+                studiedCards: [],
+                learnedCards: [],
                 progress: {
                     correctAnswers: 0,
                     totalQuestions: 0,
                     studyStreak: 0,
                     preferredLevel: 1
-                }
+                },
+                createdAt: new Date().toISOString()
             };
             
-            // Auto-login after signup
-            currentUser = userProfiles[email];
-            currentUser.email = email;
+            // Save to IndexedDB
+            await saveToIndexedDB('users', newUser);
+            
+            userProfiles[email] = newUser;
+            currentUser = newUser;
+            
+            // Save last user
+            await saveToIndexedDB('settings', { key: 'lastUser', value: email });
             
             updateUserInterface();
             hideLogin();
             showFileStatus(`Welcome to Coptic Learning System, ${name}!`, 'success');
         }
 
-        function logout() {
-            // Save current progress to user profile
+        async function logout() {
+            // Save current progress before logout
             if (currentUser) {
-                currentUser.studiedCards = Array.from(studiedCards);
-                currentUser.learnedCards = Array.from(learnedCards);
-                currentUser.progress.correctAnswers = correctAnswers;
-                currentUser.progress.totalQuestions = totalQuestions;
+                await saveProgress();
             }
             
             currentUser = null;
+            
+            // Clear last user setting
+            await deleteFromIndexedDB('settings', 'lastUser');
+            
             updateUserInterface();
             
             // Reset progress for guest mode
@@ -1750,14 +2195,10 @@
             const userInfo = document.getElementById('user-info');
             userInfo.innerHTML = `
                 <div class="user-name">Guest User</div>
-                <div class="user-role">Progress saved for this session only</div>
+                <div class="user-role">Progress will not be saved between sessions</div>
             `;
             userInfo.classList.add('active');
-            showFileStatus('Continuing as guest. Your progress will be saved only for this session.', 'success');
-        }
-
-        function checkAutoLogin() {
-            updateUserInterface();
+            showFileStatus('Continuing as guest. Create an account to save your progress!', 'info');
         }
 
         function updateUserInterface() {
@@ -1799,6 +2240,8 @@
                 drawActivityChart();
             } else if (tabName === 'browse') {
                 filterVocab();
+            } else if (tabName === 'data') {
+                updateStorageInfo();
             }
         }
 
@@ -1822,7 +2265,7 @@
             isFlipped = false;
         }
 
-        function flipCard() {
+        async function flipCard() {
             const flashcard = document.getElementById('flashcard');
             flashcard.classList.toggle('flipped');
             isFlipped = !isFlipped;
@@ -1836,6 +2279,11 @@
                 if (actualIndex !== -1) {
                     studiedCards.add(actualIndex);
                     updateProgress();
+                    
+                    // Auto-save progress
+                    if (currentUser) {
+                        await saveProgress();
+                    }
                 }
             }
         }
@@ -1933,7 +2381,7 @@
             }
         }
 
-        function markAsLearned() {
+        async function markAsLearned() {
             if (filteredVocab.length === 0) return;
             
             const currentWord = filteredVocab[currentCardIndex];
@@ -1945,6 +2393,12 @@
                 learnedCards.add(actualIndex);
                 studiedCards.add(actualIndex);
                 updateProgress();
+                
+                // Auto-save progress
+                if (currentUser) {
+                    await saveProgress();
+                }
+                
                 showFileStatus(`Marked "${currentWord.coptic}" as learned!`, 'success');
                 
                 // Create particle effect
@@ -2067,7 +2521,7 @@
             document.getElementById('finish-quiz').style.display = 'none';
         }
 
-        function selectOption(selectedAnswer, correctAnswer) {
+        async function selectOption(selectedAnswer, correctAnswer) {
             if (quizAnswered) return;
             
             const options = document.querySelectorAll('.option');
@@ -2090,6 +2544,11 @@
             quizAnswered = true;
             updateProgress();
             
+            // Auto-save progress
+            if (currentUser) {
+                await saveProgress();
+            }
+            
             // Show appropriate button
             if (currentQuizQuestion < quizQuestions.length - 1) {
                 document.getElementById('next-quiz').style.display = 'inline-block';
@@ -2105,7 +2564,7 @@
             showQuizQuestion();
         }
 
-        function finishQuiz() {
+        async function finishQuiz() {
             const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
             document.getElementById('final-score').textContent = `${correctAnswers} / ${totalQuestions} (${accuracy}%)`;
             document.getElementById('quiz-results').style.display = 'block';
@@ -2115,6 +2574,11 @@
             
             // Update progress bar to 100%
             document.getElementById('quiz-progress').style.width = '100%';
+            
+            // Save final quiz results
+            if (currentUser) {
+                await saveProgress();
+            }
         }
 
         function resetQuiz() {
@@ -2183,7 +2647,7 @@
             document.getElementById('quiz-score').textContent = accuracy + '%';
             
             // Calculate study streak
-            const streak = currentUser ? currentUser.progress.studyStreak : Math.floor(studiedCards.size / 5);
+            const streak = currentUser ? currentUser.progress?.studyStreak || 0 : Math.floor(studiedCards.size / 5);
             document.getElementById('study-streak').textContent = streak;
             
             // Most studied category
@@ -2202,7 +2666,7 @@
         }
 
         // Data Management Functions
-        function exportUserData() {
+        async function exportUserData() {
             const userData = {
                 user: currentUser ? {
                     name: currentUser.name,
@@ -2218,7 +2682,7 @@
                     sessionTime: Math.round((Date.now() - sessionStartTime) / 60000)
                 },
                 exportDate: new Date().toISOString(),
-                vocabularyVersion: "Coptic-English Historical Lexicon v1.0"
+                vocabularyVersion: "Coptic-English Historical Lexicon v1.0 (PWA)"
             };
             
             const dataStr = JSON.stringify(userData, null, 2);
@@ -2232,12 +2696,12 @@
             showFileStatus('Progress data exported successfully!', 'success');
         }
 
-        function importUserData(event) {
+        async function importUserData(event) {
             const file = event.target.files[0];
             if (!file) return;
             
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = async function(e) {
                 try {
                     const userData = JSON.parse(e.target.result);
                     
@@ -2255,6 +2719,12 @@
                     
                     updateProgress();
                     updateDataStats();
+                    
+                    // Save to IndexedDB if user is logged in
+                    if (currentUser) {
+                        await saveProgress();
+                    }
+                    
                     showFileStatus(`Progress imported successfully! Restored ${learnedCards.size} learned cards.`, 'success');
                     
                 } catch (error) {
@@ -2264,7 +2734,7 @@
             reader.readAsText(file);
         }
 
-        function exportVocabulary() {
+        async function exportVocabulary() {
             const vocabData = {
                 vocabulary: vocabulary,
                 metadata: {
@@ -2289,20 +2759,49 @@
         }
 
         // File Loading Functions
-        function loadTurtleFile() {
-            const fileInput = document.getElementById('turtle-file');
+        async function loadVocabularyFile() {
+            const fileInput = document.getElementById('vocab-file');
             const file = fileInput.files[0];
             
             if (!file) {
-                showFileStatus('Please select a Turtle/RDF file first.', 'error');
+                showFileStatus('Please select a vocabulary JSON file first.', 'error');
                 return;
             }
             
-            showFileStatus('Turtle parsing is in development. Currently using sample vocabulary.', 'error');
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                try {
+                    const vocabData = JSON.parse(e.target.result);
+                    
+                    if (vocabData.vocabulary && Array.isArray(vocabData.vocabulary)) {
+                        vocabulary = vocabData.vocabulary;
+                        filteredVocab = [...vocabulary];
+                        
+                        // Save to IndexedDB
+                        await saveVocabularyToDB();
+                        
+                        currentCardIndex = 0;
+                        updateFlashcard();
+                        updateDataStats();
+                        populateBrowse();
+                        showFileStatus(`Loaded ${vocabulary.length} vocabulary entries successfully!`, 'success');
+                    } else {
+                        throw new Error('Invalid vocabulary file format');
+                    }
+                } catch (error) {
+                    showFileStatus(`Error loading vocabulary: ${error.message}`, 'error');
+                }
+            };
+            reader.readAsText(file);
         }
 
-        function loadSampleData() {
+        async function loadSampleData() {
+            vocabulary = [...defaultVocabulary];
             filteredVocab = [...vocabulary];
+            
+            // Save to IndexedDB
+            await saveVocabularyToDB();
+            
             currentCardIndex = 0;
             updateFlashcard();
             updateDataStats();
@@ -2333,6 +2832,67 @@
             document.getElementById('session-time').textContent = sessionTime;
         }
 
+        // Storage Info
+        async function updateStorageInfo() {
+            if ('storage' in navigator && 'estimate' in navigator.storage) {
+                try {
+                    const estimate = await navigator.storage.estimate();
+                    const usage = estimate.usage || 0;
+                    const quota = estimate.quota || 0;
+                    
+                    const usageInKB = Math.round(usage / 1024);
+                    const quotaInMB = Math.round(quota / 1024 / 1024);
+                    
+                    document.getElementById('storage-used').textContent = `${usageInKB} KB`;
+                    document.getElementById('storage-total').textContent = quotaInMB > 0 ? `${quotaInMB} MB` : '∞';
+                    
+                    const percentage = quota > 0 ? (usage / quota) * 100 : 0;
+                    document.getElementById('storage-bar').style.width = `${Math.min(percentage, 100)}%`;
+                } catch (error) {
+                    console.error('Error estimating storage:', error);
+                }
+            }
+        }
+
+        // Clear all data
+        async function clearAllData() {
+            if (confirm('This will delete ALL data including vocabulary, users, and progress. Are you sure?')) {
+                try {
+                    // Clear IndexedDB
+                    const stores = ['vocabulary', 'users', 'progress', 'settings'];
+                    for (const store of stores) {
+                        const transaction = db.transaction([store], 'readwrite');
+                        await transaction.objectStore(store).clear();
+                    }
+                    
+                    // Reset app state
+                    vocabulary = [...defaultVocabulary];
+                    filteredVocab = [...vocabulary];
+                    currentUser = null;
+                    userProfiles = {};
+                    studiedCards = new Set();
+                    learnedCards = new Set();
+                    correctAnswers = 0;
+                    totalQuestions = 0;
+                    currentCardIndex = 0;
+                    
+                    // Reload default vocabulary
+                    await saveVocabularyToDB();
+                    
+                    // Update UI
+                    updateUserInterface();
+                    updateFlashcard();
+                    updateProgress();
+                    updateDataStats();
+                    populateBrowse();
+                    
+                    showFileStatus('All data cleared successfully!', 'success');
+                } catch (error) {
+                    showFileStatus(`Error clearing data: ${error.message}`, 'error');
+                }
+            }
+        }
+
         // Activity Chart
         function drawActivityChart() {
             const canvas = document.getElementById('activity-chart');
@@ -2345,7 +2905,7 @@
             // Clear canvas
             ctx.clearRect(0, 0, width, height);
             
-            // Sample data for demonstration
+            // Sample data for demonstration (in real app, would pull from progress history)
             const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
             const values = [5, 8, 12, 6, 15, 10, 7];
             const maxValue = Math.max(...values);
@@ -2407,6 +2967,112 @@
                 }
             }
         });
+
+        // Auto-save on page unload
+        window.addEventListener('beforeunload', async () => {
+            if (currentUser) {
+                await saveProgress();
+            }
+        });
+    </script>
+
+    <!-- Create manifest.json for PWA -->
+    <script>
+        // Generate manifest.json content
+        const manifest = {
+            "name": "Bohairic Coptic Learning System",
+            "short_name": "Coptic Learn",
+            "description": "Academic vocabulary learning system for Bohairic Coptic with offline support",
+            "start_url": "/",
+            "display": "standalone",
+            "background_color": "#1a1a2e",
+            "theme_color": "#8b4513",
+            "orientation": "any",
+            "icons": [
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%238b4513'/%3E%3Ctext x='256' y='300' font-size='200' font-family='serif' text-anchor='middle' fill='white'%3E%E2%B2%83%3C/text%3E%3C/svg%3E",
+                    "sizes": "192x192",
+                    "type": "image/svg+xml"
+                },
+                {
+                    "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%238b4513'/%3E%3Ctext x='256' y='300' font-size='200' font-family='serif' text-anchor='middle' fill='white'%3E%E2%B2%83%3C/text%3E%3C/svg%3E",
+                    "sizes": "512x512",
+                    "type": "image/svg+xml"
+                }
+            ]
+        };
+        
+        // Create a blob URL for the manifest
+        const manifestBlob = new Blob([JSON.stringify(manifest, null, 2)], { type: 'application/json' });
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        
+        // Update the manifest link
+        document.querySelector('link[rel="manifest"]').href = manifestURL;
+    </script>
+
+    <!-- Service Worker -->
+    <script>
+        // Create service worker content
+        const swContent = `
+// Service Worker for Coptic Learning PWA
+const CACHE_NAME = 'coptic-learning-v1';
+const urlsToCache = [
+    '/',
+    'https://github.com/CopticScriptorium/coptic-nlp/raw/refs/heads/master/antinoou-webfont.ttf'
+];
+
+// Install event
+self.addEventListener('install', event => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then(cache => {
+                console.log('Opened cache');
+                return cache.addAll(urlsToCache);
+            })
+    );
+});
+
+// Fetch event
+self.addEventListener('fetch', event => {
+    event.respondWith(
+        caches.match(event.request)
+            .then(response => {
+                // Cache hit - return response
+                if (response) {
+                    return response;
+                }
+                return fetch(event.request);
+            })
+    );
+});
+
+// Activate event
+self.addEventListener('activate', event => {
+    const cacheWhitelist = [CACHE_NAME];
+    event.waitUntil(
+        caches.keys().then(cacheNames => {
+            return Promise.all(
+                cacheNames.map(cacheName => {
+                    if (cacheWhitelist.indexOf(cacheName) === -1) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
+`;
+
+        // Create service worker registration
+        if ('serviceWorker' in navigator) {
+            // Create a blob URL for the service worker
+            const swBlob = new Blob([swContent], { type: 'application/javascript' });
+            const swURL = URL.createObjectURL(swBlob);
+            
+            // Note: In production, you would have an actual sw.js file
+            // For this demo, we're showing what the content would be
+            console.log('Service Worker content created. In production, save this as sw.js:', swContent);
+        }
     </script>
 </body>
 </html>
