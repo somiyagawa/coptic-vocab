@@ -153,6 +153,7 @@
         .content {
             padding: 30px;
             min-height: 500px;
+            overflow: visible;
         }
 
         .tab-content {
@@ -189,13 +190,15 @@
             flex-direction: column;
             align-items: center;
             gap: 30px;
+            position: relative;
+            overflow: visible;
         }
 
         .flashcard-wrapper {
             position: relative;
             width: 400px;
             height: 250px;
-            overflow: hidden;
+            overflow: visible;
         }
 
         .flashcard {
@@ -443,37 +446,9 @@
             animation: shimmer 2s infinite;
         }
 
-        @keyframes slideInRight {
-            from {
-                transform: translateX(120%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @keyframes slideOutLeft {
-            from {
-                transform: translateX(0);
-                opacity: 1;
-            }
-            to {
-                transform: translateX(-120%);
-                opacity: 0;
-            }
-        }
-
-        @keyframes slideOutUp {
-            from {
-                transform: translateY(0) scale(1);
-                opacity: 1;
-            }
-            to {
-                transform: translateY(-150%) scale(0.8);
-                opacity: 0;
-            }
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
         }
 
         .stats {
@@ -896,6 +871,48 @@
             margin: 5px 0;
         }
 
+        /* Keyboard Shortcuts Info */
+        .keyboard-shortcuts {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            padding: 20px;
+            border-radius: 12px;
+            margin-top: 20px;
+        }
+
+        .keyboard-shortcuts h5 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .keyboard-shortcuts ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .keyboard-shortcuts li {
+            color: #2e7d32;
+            margin: 5px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+
+        .keyboard-shortcuts li:before {
+            content: "⌨️";
+            position: absolute;
+            left: 0;
+        }
+
+        /* Error Message */
+        .error-message {
+            color: var(--error-color);
+            text-align: center;
+            margin-top: 15px;
+            font-weight: 500;
+            display: none;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
             .header h1 {
@@ -1005,11 +1022,6 @@
             }
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
         /* Tooltips */
         .tooltip {
             position: relative;
@@ -1045,9 +1057,21 @@
             outline-offset: 2px;
         }
 
-        /* Dark Mode Support (optional) */
-        @media (prefers-color-scheme: dark) {
-            /* Add dark mode styles here if needed */
+        /* Loading Spinner */
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -1060,24 +1084,23 @@
             <div class="user-info" id="user-info">
                 <div class="user-name" id="user-name"></div>
                 <div class="user-role" id="user-role"></div>
-                <button class="logout-btn" onclick="logout()">Logout</button>
             </div>
             
             <div id="login-prompt" style="margin-top: 15px;">
-                <button class="btn-primary" onclick="showLogin()">Login</button>
+                <button class="btn-primary" id="show-login-btn">Login</button>
                 <span style="color: white; opacity: 0.9; margin: 0 10px;">or</span>
-                <button class="btn-secondary" onclick="continueAsGuest()">Continue as Guest</button>
+                <button class="btn-secondary" id="continue-guest-btn">Continue as Guest</button>
             </div>
         </div>
 
-        <!-- Login Overlay -->
+        <!-- Login/Signup Overlay -->
         <div class="login-overlay" id="login-overlay">
-            <div class="login-modal">
+            <div class="login-modal" id="login-modal">
                 <h2 style="text-align: center; color: var(--primary-color); margin-bottom: 20px;">
-                    Login to Coptic Learning System
+                    <span id="modal-title">Login to Coptic Learning System</span>
                 </h2>
                 
-                <div class="demo-accounts">
+                <div class="demo-accounts" id="demo-accounts">
                     <h4>Demo Accounts:</h4>
                     <div class="demo-account">
                         <strong>Researcher:</strong> scholar@coptic.edu / coptic123
@@ -1087,7 +1110,8 @@
                     </div>
                 </div>
                 
-                <form class="login-form" onsubmit="login(event)">
+                <!-- Login Form -->
+                <form class="login-form" id="login-form">
                     <div class="form-group">
                         <label for="email">Email:</label>
                         <input type="email" id="email" required autocomplete="email">
@@ -1098,11 +1122,48 @@
                     </div>
                     <div style="display: flex; gap: 10px;">
                         <button type="submit" class="btn-primary" style="flex: 1;">Login</button>
-                        <button type="button" class="btn-secondary" onclick="hideLogin()">Cancel</button>
+                        <button type="button" class="btn-secondary" id="cancel-login-btn">Cancel</button>
                     </div>
                 </form>
                 
-                <div id="login-error" style="color: var(--error-color); text-align: center; margin-top: 15px; display: none; font-weight: 500;"></div>
+                <!-- Signup Form (hidden by default) -->
+                <form class="login-form" id="signup-form" style="display: none;">
+                    <div class="form-group">
+                        <label for="signup-name">Full Name:</label>
+                        <input type="text" id="signup-name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-email">Email:</label>
+                        <input type="email" id="signup-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-password">Password:</label>
+                        <input type="password" id="signup-password" required minlength="6">
+                    </div>
+                    <div class="form-group">
+                        <label for="signup-role">I am a:</label>
+                        <select id="signup-role" required>
+                            <option value="">Select role...</option>
+                            <option value="student">Student</option>
+                            <option value="researcher">Researcher</option>
+                            <option value="teacher">Teacher</option>
+                            <option value="enthusiast">Coptic Enthusiast</option>
+                        </select>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="btn-primary" style="flex: 1;">Sign Up</button>
+                        <button type="button" class="btn-secondary" id="cancel-signup-btn">Cancel</button>
+                    </div>
+                </form>
+                
+                <div id="auth-error" class="error-message"></div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <p id="switch-auth-text">
+                        <span id="switch-text">Don't have an account?</span>
+                        <a href="#" id="switch-auth-link" style="color: var(--primary-color); font-weight: 600;">Sign up</a>
+                    </p>
+                </div>
             </div>
         </div>
 
@@ -1177,6 +1238,15 @@
                     <div style="margin-top: 20px; text-align: center;">
                         <button class="btn-success" onclick="markAsLearned()">✓ Mark as Learned</button>
                     </div>
+                    
+                    <div class="keyboard-shortcuts">
+                        <h5>Keyboard Shortcuts:</h5>
+                        <ul>
+                            <li>← / → - Navigate cards</li>
+                            <li>Space / Enter - Flip card</li>
+                            <li>L - Mark as learned</li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
@@ -1211,6 +1281,7 @@
                         <p style="font-size: 1.2em; margin-top: 15px;">
                             Your Score: <span id="final-score" style="font-weight: bold; color: var(--primary-color);"></span>
                         </p>
+                        <button class="btn-primary" onclick="resetQuiz()" style="margin-top: 20px;">Start New Quiz</button>
                     </div>
                 </div>
             </div>
@@ -1489,15 +1560,61 @@
         // Setup Event Listeners
         function setupEventListeners() {
             // Login button
-            const loginBtn = document.querySelector('#login-prompt button.btn-primary');
+            const loginBtn = document.getElementById('show-login-btn');
             if (loginBtn) {
                 loginBtn.addEventListener('click', showLogin);
             }
             
             // Guest button
-            const guestBtn = document.querySelector('#login-prompt button.btn-secondary');
+            const guestBtn = document.getElementById('continue-guest-btn');
             if (guestBtn) {
                 guestBtn.addEventListener('click', continueAsGuest);
+            }
+            
+            // Cancel login button
+            const cancelBtn = document.getElementById('cancel-login-btn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', hideLogin);
+            }
+            
+            // Cancel signup button
+            const cancelSignupBtn = document.getElementById('cancel-signup-btn');
+            if (cancelSignupBtn) {
+                cancelSignupBtn.addEventListener('click', () => {
+                    showLoginForm();
+                    hideLogin();
+                });
+            }
+            
+            // Login form submission
+            const loginForm = document.getElementById('login-form');
+            if (loginForm) {
+                loginForm.addEventListener('submit', login);
+            }
+            
+            // Signup form submission
+            const signupForm = document.getElementById('signup-form');
+            if (signupForm) {
+                signupForm.addEventListener('submit', signup);
+            }
+            
+            // Switch auth link
+            const switchLink = document.getElementById('switch-auth-link');
+            if (switchLink) {
+                switchLink.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    toggleAuthMode();
+                });
+            }
+            
+            // Login overlay click to close
+            const loginOverlay = document.getElementById('login-overlay');
+            if (loginOverlay) {
+                loginOverlay.addEventListener('click', (e) => {
+                    if (e.target === loginOverlay) {
+                        hideLogin();
+                    }
+                });
             }
         }
 
@@ -1511,9 +1628,37 @@
 
         function hideLogin() {
             document.getElementById('login-overlay').style.display = 'none';
-            document.getElementById('login-error').style.display = 'none';
+            document.getElementById('auth-error').style.display = 'none';
             document.getElementById('email').value = '';
             document.getElementById('password').value = '';
+            showLoginForm(); // Reset to login form
+        }
+
+        function showLoginForm() {
+            document.getElementById('login-form').style.display = 'flex';
+            document.getElementById('signup-form').style.display = 'none';
+            document.getElementById('modal-title').textContent = 'Login to Coptic Learning System';
+            document.getElementById('demo-accounts').style.display = 'block';
+            document.getElementById('switch-text').textContent = "Don't have an account?";
+            document.getElementById('switch-auth-link').textContent = 'Sign up';
+        }
+
+        function showSignupForm() {
+            document.getElementById('login-form').style.display = 'none';
+            document.getElementById('signup-form').style.display = 'flex';
+            document.getElementById('modal-title').textContent = 'Create New Account';
+            document.getElementById('demo-accounts').style.display = 'none';
+            document.getElementById('switch-text').textContent = 'Already have an account?';
+            document.getElementById('switch-auth-link').textContent = 'Login';
+        }
+
+        function toggleAuthMode() {
+            const loginForm = document.getElementById('login-form');
+            if (loginForm.style.display !== 'none') {
+                showSignupForm();
+            } else {
+                showLoginForm();
+            }
         }
 
         function login(event) {
@@ -1536,9 +1681,47 @@
                 updateProgress();
                 showFileStatus(`Welcome back, ${currentUser.name}!`, 'success');
             } else {
-                document.getElementById('login-error').textContent = 'Invalid email or password';
-                document.getElementById('login-error').style.display = 'block';
+                document.getElementById('auth-error').textContent = 'Invalid email or password';
+                document.getElementById('auth-error').style.display = 'block';
             }
+        }
+
+        function signup(event) {
+            event.preventDefault();
+            const name = document.getElementById('signup-name').value;
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const role = document.getElementById('signup-role').value;
+            
+            // Check if email already exists
+            if (userProfiles[email]) {
+                document.getElementById('auth-error').textContent = 'An account with this email already exists';
+                document.getElementById('auth-error').style.display = 'block';
+                return;
+            }
+            
+            // Create new user
+            userProfiles[email] = {
+                name: name,
+                password: password,
+                role: role,
+                studiedCards: new Set(),
+                learnedCards: new Set(),
+                progress: {
+                    correctAnswers: 0,
+                    totalQuestions: 0,
+                    studyStreak: 0,
+                    preferredLevel: 1
+                }
+            };
+            
+            // Auto-login after signup
+            currentUser = userProfiles[email];
+            currentUser.email = email;
+            
+            updateUserInterface();
+            hideLogin();
+            showFileStatus(`Welcome to Coptic Learning System, ${name}!`, 'success');
         }
 
         function logout() {
@@ -1584,6 +1767,11 @@
             if (currentUser) {
                 document.getElementById('user-name').textContent = currentUser.name;
                 document.getElementById('user-role').textContent = `Role: ${currentUser.role} | ${currentUser.email}`;
+                userInfo.innerHTML = `
+                    <div class="user-name">${currentUser.name}</div>
+                    <div class="user-role">Role: ${currentUser.role} | ${currentUser.email}</div>
+                    <button class="logout-btn" onclick="logout()">Logout</button>
+                `;
                 userInfo.classList.add('active');
                 loginPrompt.style.display = 'none';
             } else {
@@ -1675,8 +1863,8 @@
                 
                 // Update new card content
                 const word = filteredVocab[currentCardIndex];
-                newCard.querySelector('#coptic-word').textContent = word.coptic;
-                newCard.querySelector('#english-word').textContent = word.english;
+                newCard.querySelector('.coptic-text').textContent = word.coptic;
+                newCard.querySelector('.english-text').textContent = word.english;
                 
                 // Animate in new card
                 setTimeout(() => {
@@ -1722,12 +1910,13 @@
         function createParticles(x, y) {
             const colors = ['#FFD700', '#FFA500', '#FF6347', '#00CED1', '#32CD32'];
             const particleCount = 12;
+            const container = document.querySelector('.flashcard-container');
             
             for (let i = 0; i < particleCount; i++) {
                 const particle = document.createElement('div');
                 particle.className = 'particle';
-                particle.style.left = x + 'px';
-                particle.style.top = y + 'px';
+                particle.style.left = '50%';
+                particle.style.top = '125px';
                 particle.style.width = '10px';
                 particle.style.height = '10px';
                 particle.style.borderRadius = '50%';
@@ -1738,7 +1927,7 @@
                 particle.style.setProperty('--x', Math.cos(angle) * velocity + 'px');
                 particle.style.setProperty('--y', Math.sin(angle) * velocity + 'px');
                 
-                document.body.appendChild(particle);
+                container.appendChild(particle);
                 
                 setTimeout(() => particle.remove(), 1000);
             }
@@ -1759,9 +1948,7 @@
                 showFileStatus(`Marked "${currentWord.coptic}" as learned!`, 'success');
                 
                 // Create particle effect
-                const card = document.getElementById('flashcard');
-                const rect = card.getBoundingClientRect();
-                createParticles(rect.left + rect.width / 2, rect.top);
+                createParticles();
                 
                 // Animate card going up
                 animateCardTransition('up', () => {
@@ -1925,6 +2112,9 @@
             document.querySelector('.question-card').style.display = 'none';
             document.getElementById('next-quiz').style.display = 'none';
             document.getElementById('finish-quiz').style.display = 'none';
+            
+            // Update progress bar to 100%
+            document.getElementById('quiz-progress').style.width = '100%';
         }
 
         function resetQuiz() {
@@ -2189,7 +2379,9 @@
         }, 60000);
 
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', initApp);
+        document.addEventListener('DOMContentLoaded', function() {
+            initApp();
+        });
 
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
