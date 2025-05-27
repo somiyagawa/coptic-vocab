@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ⲁⲣⲓⲫⲙⲉⲩⲓ: Bohairic Coptic Vocabulary Learning App</title>
+    <title>Bohairic Coptic Vocabulary Learning App</title>
     <style>
         @font-face {
             font-family: 'Antinoou';
@@ -191,11 +191,37 @@
             gap: 30px;
         }
 
-        .flashcard {
+        .flashcard-wrapper {
+            position: relative;
             width: 400px;
             height: 250px;
+            overflow: hidden;
+        }
+
+        .flashcard {
+            width: 100%;
+            height: 100%;
             perspective: 1000px;
             cursor: pointer;
+            position: absolute;
+            top: 0;
+            left: 0;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s ease;
+        }
+
+        .flashcard.slide-out-left {
+            transform: translateX(-120%);
+            opacity: 0;
+        }
+
+        .flashcard.slide-in-right {
+            transform: translateX(120%);
+            opacity: 0;
+        }
+
+        .flashcard.slide-out-up {
+            transform: translateY(-150%) scale(0.8);
+            opacity: 0;
         }
 
         .flashcard-inner {
@@ -417,8 +443,37 @@
             animation: shimmer 2s infinite;
         }
 
-        @keyframes shimmer {
-            100% { left: 100%; }
+        @keyframes slideInRight {
+            from {
+                transform: translateX(120%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @keyframes slideOutLeft {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(-120%);
+                opacity: 0;
+            }
+        }
+
+        @keyframes slideOutUp {
+            from {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+            to {
+                transform: translateY(-150%) scale(0.8);
+                opacity: 0;
+            }
         }
 
         .stats {
@@ -847,7 +902,7 @@
                 font-size: 2em;
             }
             
-            .flashcard {
+            .flashcard-wrapper {
                 width: 100%;
                 max-width: 350px;
                 height: 200px;
@@ -919,7 +974,7 @@
                 padding: 20px;
             }
             
-            .flashcard {
+            .flashcard-wrapper {
                 height: 180px;
             }
             
@@ -932,15 +987,22 @@
             }
         }
 
-        /* Loading Animation */
-        .loading {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid var(--primary-color);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
+        .particle {
+            position: absolute;
+            pointer-events: none;
+            opacity: 0;
+            animation: particle 1s ease-out forwards;
+        }
+
+        @keyframes particle {
+            0% {
+                transform: translate(0, 0) scale(0);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--x), var(--y)) scale(1);
+                opacity: 0;
+            }
         }
 
         @keyframes spin {
@@ -992,8 +1054,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1><span class="coptic">ⲁⲣⲓⲫⲙⲉⲩⲓ</span> • Bohairic Coptic</h1>
-            <p>Online Vocabulary Learning System</p>
+            <h1><span class="coptic">ⲃⲟϩⲁⲓⲣⲓⲕⲟⲛ</span> • Bohairic Coptic</h1>
+            <p>Academic Vocabulary Learning System</p>
             
             <div class="user-info" id="user-info">
                 <div class="user-name" id="user-name"></div>
@@ -1093,13 +1155,15 @@
                         <span id="current-level">Level: Mixed</span>
                     </div>
                     
-                    <div class="flashcard" id="flashcard" onclick="flipCard()">
-                        <div class="flashcard-inner">
-                            <div class="flashcard-front">
-                                <div class="coptic-text" id="coptic-word">ⲁⲅⲁⲡⲏ</div>
-                            </div>
-                            <div class="flashcard-back">
-                                <div class="english-text" id="english-word">love</div>
+                    <div class="flashcard-wrapper">
+                        <div class="flashcard" id="flashcard" onclick="flipCard()">
+                            <div class="flashcard-inner">
+                                <div class="flashcard-front">
+                                    <div class="coptic-text" id="coptic-word">ⲁⲅⲁⲡⲏ</div>
+                                </div>
+                                <div class="flashcard-back">
+                                    <div class="english-text" id="english-word">love</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1405,6 +1469,9 @@
             filteredVocab = [...vocabulary];
             currentCardIndex = 0;
             
+            // Set up button event listeners
+            setupEventListeners();
+            
             // Check if user should be logged in automatically
             checkAutoLogin();
             
@@ -1417,6 +1484,21 @@
             updateProgress();
             updateDataStats();
             drawActivityChart();
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Login button
+            const loginBtn = document.querySelector('#login-prompt button.btn-primary');
+            if (loginBtn) {
+                loginBtn.addEventListener('click', showLogin);
+            }
+            
+            // Guest button
+            const guestBtn = document.querySelector('#login-prompt button.btn-secondary');
+            if (guestBtn) {
+                guestBtn.addEventListener('click', continueAsGuest);
+            }
         }
 
         // User Management Functions
@@ -1482,6 +1564,12 @@
 
         function continueAsGuest() {
             document.getElementById('login-prompt').style.display = 'none';
+            const userInfo = document.getElementById('user-info');
+            userInfo.innerHTML = `
+                <div class="user-name">Guest User</div>
+                <div class="user-role">Progress saved for this session only</div>
+            `;
+            userInfo.classList.add('active');
             showFileStatus('Continuing as guest. Your progress will be saved only for this session.', 'success');
         }
 
@@ -1564,16 +1652,96 @@
             }
         }
 
+        function animateCardTransition(direction, callback) {
+            const currentCard = document.getElementById('flashcard');
+            const wrapper = document.querySelector('.flashcard-wrapper');
+            
+            // Create new card element
+            const newCard = currentCard.cloneNode(true);
+            newCard.classList.remove('flipped', 'slide-out-left', 'slide-out-up', 'slide-in-right');
+            newCard.classList.add('slide-in-right');
+            wrapper.appendChild(newCard);
+            
+            // Animate out current card
+            if (direction === 'left') {
+                currentCard.classList.add('slide-out-left');
+            } else if (direction === 'up') {
+                currentCard.classList.add('slide-out-up');
+            }
+            
+            // Wait a bit then update content and animate in new card
+            setTimeout(() => {
+                callback();
+                
+                // Update new card content
+                const word = filteredVocab[currentCardIndex];
+                newCard.querySelector('#coptic-word').textContent = word.coptic;
+                newCard.querySelector('#english-word').textContent = word.english;
+                
+                // Animate in new card
+                setTimeout(() => {
+                    newCard.classList.remove('slide-in-right');
+                }, 50);
+                
+                // Clean up old card
+                setTimeout(() => {
+                    currentCard.remove();
+                    newCard.id = 'flashcard';
+                    newCard.onclick = flipCard;
+                }, 500);
+            }, 100);
+        }
+
         function nextCard() {
             if (filteredVocab.length === 0) return;
-            currentCardIndex = (currentCardIndex + 1) % filteredVocab.length;
-            updateFlashcard();
+            
+            animateCardTransition('left', () => {
+                currentCardIndex = (currentCardIndex + 1) % filteredVocab.length;
+                document.getElementById('card-counter').textContent = `Card ${currentCardIndex + 1} of ${filteredVocab.length}`;
+                const word = filteredVocab[currentCardIndex];
+                document.getElementById('current-category').textContent = word.category;
+                document.getElementById('current-level').textContent = `Level ${word.level} (${word.etymology})`;
+                isFlipped = false;
+            });
         }
 
         function previousCard() {
             if (filteredVocab.length === 0) return;
-            currentCardIndex = currentCardIndex === 0 ? filteredVocab.length - 1 : currentCardIndex - 1;
-            updateFlashcard();
+            
+            // For previous, we'll use the same left animation but go backwards
+            animateCardTransition('left', () => {
+                currentCardIndex = currentCardIndex === 0 ? filteredVocab.length - 1 : currentCardIndex - 1;
+                document.getElementById('card-counter').textContent = `Card ${currentCardIndex + 1} of ${filteredVocab.length}`;
+                const word = filteredVocab[currentCardIndex];
+                document.getElementById('current-category').textContent = word.category;
+                document.getElementById('current-level').textContent = `Level ${word.level} (${word.etymology})`;
+                isFlipped = false;
+            });
+        }
+
+        function createParticles(x, y) {
+            const colors = ['#FFD700', '#FFA500', '#FF6347', '#00CED1', '#32CD32'];
+            const particleCount = 12;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.left = x + 'px';
+                particle.style.top = y + 'px';
+                particle.style.width = '10px';
+                particle.style.height = '10px';
+                particle.style.borderRadius = '50%';
+                particle.style.backgroundColor = colors[Math.floor(Math.random() * colors.length)];
+                
+                const angle = (i / particleCount) * Math.PI * 2;
+                const velocity = 100 + Math.random() * 50;
+                particle.style.setProperty('--x', Math.cos(angle) * velocity + 'px');
+                particle.style.setProperty('--y', Math.sin(angle) * velocity + 'px');
+                
+                document.body.appendChild(particle);
+                
+                setTimeout(() => particle.remove(), 1000);
+            }
         }
 
         function markAsLearned() {
@@ -1590,10 +1758,21 @@
                 updateProgress();
                 showFileStatus(`Marked "${currentWord.coptic}" as learned!`, 'success');
                 
-                // Auto-advance to next card
-                setTimeout(() => {
-                    nextCard();
-                }, 1000);
+                // Create particle effect
+                const card = document.getElementById('flashcard');
+                const rect = card.getBoundingClientRect();
+                createParticles(rect.left + rect.width / 2, rect.top);
+                
+                // Animate card going up
+                animateCardTransition('up', () => {
+                    // Move to next card after marking as learned
+                    currentCardIndex = (currentCardIndex + 1) % filteredVocab.length;
+                    const word = filteredVocab[currentCardIndex];
+                    document.getElementById('card-counter').textContent = `Card ${currentCardIndex + 1} of ${filteredVocab.length}`;
+                    document.getElementById('current-category').textContent = word.category;
+                    document.getElementById('current-level').textContent = `Level ${word.level} (${word.etymology})`;
+                    isFlipped = false;
+                });
             }
         }
 
@@ -1603,6 +1782,11 @@
                 [filteredVocab[i], filteredVocab[j]] = [filteredVocab[j], filteredVocab[i]];
             }
             currentCardIndex = 0;
+            
+            // Reset the flashcard without animation
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.remove('slide-out-left', 'slide-out-up', 'slide-in-right');
+            
             updateFlashcard();
             showFileStatus('Cards shuffled!', 'success');
         }
@@ -1618,6 +1802,11 @@
             });
             
             currentCardIndex = 0;
+            
+            // Reset the flashcard without animation
+            const flashcard = document.getElementById('flashcard');
+            flashcard.classList.remove('slide-out-left', 'slide-out-up', 'slide-in-right');
+            
             updateFlashcard();
         }
 
